@@ -81,7 +81,8 @@ func TestWhitespaceAndNewlineRemoval(t *testing.T) {
         - value1
         - value2
 `
-	expectedOutput := "key:\n- value1\n- value2\n"
+	// Correctly minified YAML should maintain the necessary indentation
+	expectedOutput := "key:\n  - value1\n  - value2\n"
 
 	minified, err := Minify(input)
 	if err != nil {
