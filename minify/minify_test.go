@@ -93,3 +93,31 @@ func TestWhitespaceAndNewlineRemoval(t *testing.T) {
 		t.Errorf("Expected %q, got %q", expectedOutput, minified)
 	}
 }
+
+func TestBooleanAndNullMinification(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		output string
+	}{
+		{"True to 'y'", "boolean: true\n", "boolean: y\n"},
+		{"False to 'n'", "boolean: false\n", "boolean: n\n"},
+		{"Null to '~'", "value: null\n", "value: ~\n"},
+		{"Preserve '~'", "value: ~\n", "value: ~\n"},
+		// Additional test cases to ensure context-specific replacement
+		{"Inside quotes", "text: \"true is not y\"\n", "text: \"true is not y\"\n"},
+		{"As part of a word", "keyword: truevalue\n", "keyword: truevalue\n"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			minified, err := Minify(tc.input)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			if minified != tc.output {
+				t.Errorf("Expected %q, got %q", tc.output, minified)
+			}
+		})
+	}
+}

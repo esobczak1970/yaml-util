@@ -16,6 +16,7 @@ package minify
 
 import (
 	"bytes"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -23,6 +24,9 @@ import (
 
 // Minify takes a YAML string, minifies it and returns the minified YAML.
 func Minify(inputYAML string) (string, error) {
+	// Preprocess the input string
+	inputYAML = preprocessMinifications(inputYAML)
+
 	var rootNode yaml.Node
 
 	// Unmarshal the YAML into the rootNode
@@ -67,5 +71,34 @@ func minifyNode(node *yaml.Node) {
 		if node.Style == yaml.DoubleQuotedStyle || node.Style == yaml.SingleQuotedStyle {
 			node.Style = yaml.TaggedStyle
 		}
+
+		// Minify boolean and null values based on string comparison
+		if node.Value == "true" {
+			node.Value = "y"
+		} else if node.Value == "false" {
+			node.Value = "n"
+		} else if node.Value == "null" {
+			node.Value = "~"
+		}
 	}
+}
+
+func preprocessMinifications(input string) string {
+	// Regular expressions to identify standalone booleans and nulls
+	trueRegex := regexp.MustCompile(`(?m)(^|\s)true($|\s)`)
+	falseRegex := regexp.MustCompile(`(?m)(^|\s)false($|\s)`)
+	nullRegex := regexp.MustCompile(`(?m)(^|\s)null($|\s)`)
+
+	// Replace true, false, and null with 'y', 'n', and '~'
+	input = trueRegex.ReplaceAllStringFunc(input, func(m string) string {
+		return strings.Replace(m, "true", "y", -1)
+	})
+	input = falseRegex.ReplaceAllStringFunc(input, func(m string) string {
+		return strings.Replace(m, "false", "n", -1)
+	})
+	input = nullRegex.ReplaceAllStringFunc(input, func(m string) string {
+		return strings.Replace(m, "null", "~", -1)
+	})
+
+	return input
 }
