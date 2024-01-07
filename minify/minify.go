@@ -4,15 +4,13 @@ package minify
 // YAML minifier
 
 // TODO:
-// 1. Write a function to minify boolean values from true to 'y', false to 'n', and null to '~'.
-// 2. Minify sequences in string representations.
-// 3. Minify mappings in string representations to inline format.
-// 4. Minify mappings in string representations to remove unnecessary quotes.
-// 5. Minify using anchor and alias to reduce redundancy.
-// 6. Minify key: value spacing to key:value.
-// 7. Remove any other unnecessary whitespace or new lines.
-// 8. Implement a 'safe mode' that minifies only as far as possible while ensuring that the unmarshaled versions of the original and current YAML are valid.
-// 9. Ensure code can handle complex combinations of data types.
+// Minify mappings in string representations to inline format.
+// Minify mappings in string representations to remove unnecessary quotes.
+// Minify using anchor and alias to reduce redundancy.
+// Minify key: value spacing to key:value.
+// Remove any other unnecessary whitespace or new lines.
+// Implement a 'safe mode' that minifies only as far as possible while ensuring that the unmarshaled versions of the original and current YAML are valid.
+// Ensure code can handle complex combinations of data types.
 
 import (
 	"bytes"
@@ -50,6 +48,9 @@ func Minify(inputYAML string) (string, error) {
 
 	// Convert buffer contents to a string and trim leading whitespace
 	minifiedYAML := strings.TrimLeft(buffer.String(), " \t")
+
+	// Post-process the minified YAML
+	minifiedYAML = postProcessMinifications(minifiedYAML)
 
 	// Add a newline at the end if it's not already there
 	if !strings.HasSuffix(minifiedYAML, "\n") {
@@ -102,3 +103,34 @@ func preprocessMinifications(input string) string {
 
 	return input
 }
+
+func postProcessMinifications(input string) string {
+	var lines []string
+	inMapping := false
+
+	for _, line := range strings.Split(input, "\n") {
+		trimmedLine := strings.TrimSpace(line)
+
+		// Detect if we're in a mapping block
+		if strings.HasSuffix(trimmedLine, ":") {
+			inMapping = true
+		} else if trimmedLine == "" {
+			inMapping = false
+		}
+
+		// Apply minification only to non-indented key-value pairs and within mappings
+		if !strings.HasPrefix(line, "  ") && keyValueRegex.MatchString(trimmedLine) {
+			if inMapping && !strings.HasSuffix(trimmedLine, ":") {
+				line = keyValueRegex.ReplaceAllString(line, "$1:$2")
+			} else if !inMapping {
+				line = keyValueRegex.ReplaceAllString(line, "$1:$2")
+			}
+		}
+
+		lines = append(lines, line)
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+var keyValueRegex = regexp.MustCompile(`^\s*([^:\n]+):\s+(.*)$`)
