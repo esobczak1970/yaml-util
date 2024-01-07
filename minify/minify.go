@@ -3,6 +3,17 @@ package minify
 // minify.go
 // YAML minifier
 
+// TODO:
+// 1. Write a function to minify boolean values from true to 'y', false to 'n', and null to '~'.
+// 2. Minify sequences in string representations.
+// 3. Minify mappings in string representations to inline format.
+// 4. Minify mappings in string representations to remove unnecessary quotes.
+// 5. Minify using anchor and alias to reduce redundancy.
+// 6. Minify key: value spacing to key:value.
+// 7. Remove any other unnecessary whitespace or new lines.
+// 8. Implement a 'safe mode' that minifies only as far as possible while ensuring that the unmarshaled versions of the original and current YAML are valid.
+// 9. Ensure code can handle complex combinations of data types.
+
 import (
 	"bytes"
 	"strings"
@@ -58,20 +69,3 @@ func minifyNode(node *yaml.Node) {
 		}
 	}
 }
-
-// Use yaml.Node to preserve order where necessary
-// When handling strings, you need to ensure proper escaping and quoting, especially if the string contains characters that could be misinterpreted in YAML (like colons or braces).
-// Make sure to handle arrays properly
-// write unit tests that cover things that get cleaned up this way so we can confirm what is cleaned up
-// Tests should verify all minifications are valid
-// In the case of tests that involve mappings the unordered map should be unmarshaled and then marshaled to ensure it is the same
-// if scalar values don't get unquoted then write a function to perform this cleanup
-// write a function to minify boolean from true to y, false to n and null to ~
-// minify sequences in string
-// minify mappings in string to inline
-// minify mappings in string to remove unnecessary quotes
-// minify using anchor and alias
-// minify key: value to key:value spacing
-// minify by removing any other whitespace or new lines that are not necessary
-// could support a safe mode that would minify only as far as possible by trying each minification then validating that the original and current unmarshalled versions are valid
-// code should be able to handle complex combinations of data types
