@@ -1,71 +1,236 @@
-// /maxify/maxify.go
+// maxify/maxify.go
 package maxify
 
 import (
 	"bytes"
+	"errors"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
-// Maxify expands YAML into a human-readable format.
-func Maxify(inputYAML string) (string, error) {
-	var rootNode yaml.Node
+const defaultIndent = 4
 
-	// Unmarshal the compact YAML into a structured format.
-	err := yaml.Unmarshal([]byte(inputYAML), &rootNode)
-	if err != nil {
+// Maxify expands minified YAML-like input into a human-readable YAML format.
+func Maxify(inputYAML string) (string, error) {
+	return MaxifyWithIndent(inputYAML, defaultIndent)
+}
+
+// MaxifyWithIndent expands YAML with a custom indentation level.
+func MaxifyWithIndent(inputYAML string, indent int) (string, error) {
+	if strings.TrimSpace(inputYAML) == "" {
+		return "", nil
+	}
+
+	if err := validateIndentation(inputYAML); err != nil {
 		return "", err
 	}
 
-	// Ensure mappings and lists are properly expanded.
+	normalized := insertSpaceAfterColon(inputYAML)
+
+	var rootNode yaml.Node
+	if err := yaml.Unmarshal([]byte(normalized), &rootNode); err != nil {
+		return "", err
+	}
+
 	expandNode(&rootNode)
 
-	// Convert back to YAML with proper formatting.
+	// Encode the document content (not the DocumentNode) to avoid leading "---".
+	nodeToEncode := &rootNode
+	if rootNode.Kind == yaml.DocumentNode && len(rootNode.Content) == 1 {
+		nodeToEncode = rootNode.Content[0]
+	}
+
 	var buffer bytes.Buffer
 	encoder := yaml.NewEncoder(&buffer)
-	encoder.SetIndent(4) // Indent for readability
+	encoder.SetIndent(indent)
 	defer encoder.Close()
 
-	if err := encoder.Encode(&rootNode); err != nil {
+	if err := encoder.Encode(nodeToEncode); err != nil {
 		return "", err
 	}
 
-	return buffer.String(), nil
+	return ensureTrailingNewline(trimTrailingWhitespace(buffer.String())), nil
 }
 
-// expandNode recursively ensures proper formatting for mappings and sequences.
 func expandNode(node *yaml.Node) {
+	if node == nil {
+		return
+	}
+
 	switch node.Kind {
-	case yaml.MappingNode:
-		node.Style = 0 // Ensures multi-line formatting
-		for i := 0; i < len(node.Content); i++ {
-			expandNode(node.Content[i])
+	case yaml.DocumentNode:
+		for _, n := range node.Content {
+			expandNode(n)
 		}
-	case yaml.SequenceNode:
-		node.Style = 0 // Expands lists properly
-		for _, item := range node.Content {
-			expandNode(item)
+	case yaml.MappingNode, yaml.SequenceNode:
+		// Force block style for readability.
+		node.Style &^= yaml.FlowStyle
+		for _, n := range node.Content {
+			expandNode(n)
 		}
 	case yaml.ScalarNode:
-		node.Style = 0 // Ensures correct formatting for values
+		expandScalar(node)
+	case yaml.AliasNode:
+		// Preserve aliases as-is.
 	}
 }
 
-// formatNode recursively ensures proper formatting of mappings and sequences.
-func formatNode(node *yaml.Node) {
-	switch node.Kind {
-	case yaml.MappingNode:
-		// Expand all inline mappings into multi-line key-value pairs
-		for i := 0; i < len(node.Content); i++ {
-			formatNode(node.Content[i])
-		}
-	case yaml.SequenceNode:
-		// Ensure sequences are formatted properly
-		for _, item := range node.Content {
-			formatNode(item)
-		}
-	case yaml.ScalarNode:
-		// Convert scalars to plain formatting (fixes inline issues)
-		node.Style = yaml.LiteralStyle
+func expandScalar(node *yaml.Node) {
+	if node == nil || node.Kind != yaml.ScalarNode {
+		return
 	}
+
+	// Expand shorthand bool/null in plain scalars.
+	if node.Style == 0 {
+		switch node.Value {
+		case "y", "Y", "yes", "Yes", "YES":
+			node.Tag = "!!bool"
+			node.Value = "true"
+		case "n", "N", "no", "No", "NO":
+			node.Tag = "!!bool"
+			node.Value = "false"
+		case "~":
+			node.Tag = "!!null"
+			node.Value = "null"
+		}
+	}
+
+	// Be robust if the parser already tagged it but kept a short form.
+	switch node.Tag {
+	case "!!bool":
+		if node.Value == "y" || node.Value == "Y" {
+			node.Value = "true"
+		}
+		if node.Value == "n" || node.Value == "N" {
+			node.Value = "false"
+		}
+	case "!!null":
+		if node.Value == "~" {
+			node.Value = "null"
+		}
+	}
+}
+
+// validateIndentation is intentionally permissive:
+// - Leading whitespace is allowed.
+// - Tabs are rejected.
+// - Indentation may increase only after a line that starts a block (ends with ":" or is "-").
+// This catches the test case: "key:\n value\n  nested" (nested under a scalar line).
+func validateIndentation(input string) error {
+	lines := strings.Split(input, "\n")
+
+	prevLine := ""
+	prevIndent := 0
+	havePrev := false
+
+	for _, raw := range lines {
+		if strings.TrimSpace(raw) == "" {
+			continue
+		}
+		if strings.ContainsRune(raw, '\t') {
+			return errors.New("invalid indentation: tabs are not allowed")
+		}
+
+		indent := countLeadingSpaces(raw)
+		line := strings.TrimSpace(raw)
+
+		if havePrev && indent > prevIndent {
+			prevTrim := strings.TrimSpace(prevLine)
+			if !strings.HasSuffix(prevTrim, ":") && prevTrim != "-" {
+				return errors.New("invalid indentation: indentation increased under a non-block line")
+			}
+		}
+
+		prevLine = line
+		prevIndent = indent
+		havePrev = true
+	}
+
+	return nil
+}
+
+func countLeadingSpaces(s string) int {
+	n := 0
+	for n < len(s) && s[n] == ' ' {
+		n++
+	}
+	return n
+}
+
+// insertSpaceAfterColon converts "key:value" into "key: value" when the colon is
+// clearly acting as a mapping separator (outside of quotes).
+func insertSpaceAfterColon(input string) string {
+	var b strings.Builder
+	b.Grow(len(input))
+
+	inSingle := false
+	inDouble := false
+
+	for i := 0; i < len(input); i++ {
+		c := input[i]
+
+		if inSingle {
+			if c == '\'' {
+				inSingle = false
+			}
+			b.WriteByte(c)
+			continue
+		}
+
+		if inDouble {
+			if c == '\\' && i+1 < len(input) {
+				b.WriteByte(c)
+				i++
+				b.WriteByte(input[i])
+				continue
+			}
+			if c == '"' {
+				inDouble = false
+			}
+			b.WriteByte(c)
+			continue
+		}
+
+		switch c {
+		case '\'':
+			inSingle = true
+			b.WriteByte(c)
+			continue
+		case '"':
+			inDouble = true
+			b.WriteByte(c)
+			continue
+		case ':':
+			b.WriteByte(c)
+			if i+1 >= len(input) {
+				continue
+			}
+			next := input[i+1]
+			if next == ' ' || next == '\n' || next == '\r' || next == '\t' || next == ',' || next == '}' || next == ']' {
+				continue
+			}
+			b.WriteByte(' ')
+			continue
+		default:
+			b.WriteByte(c)
+		}
+	}
+
+	return b.String()
+}
+
+func trimTrailingWhitespace(input string) string {
+	lines := strings.Split(input, "\n")
+	for i := range lines {
+		lines[i] = strings.TrimRight(lines[i], " \t")
+	}
+	return strings.Join(lines, "\n")
+}
+
+func ensureTrailingNewline(s string) string {
+	if s == "" || strings.HasSuffix(s, "\n") {
+		return s
+	}
+	return s + "\n"
 }
