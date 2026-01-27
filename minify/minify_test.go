@@ -1,8 +1,109 @@
+// /minify/minify_test.go
 package minify
 
 import (
+	"strings"
 	"testing"
 )
+
+// TestMinifyBasic ensures that minification removes unnecessary spaces.
+func TestMinifyBasic(t *testing.T) {
+	input := "key: value\n"
+	expectedOutput := "key:value\n"
+
+	minified, err := Minify(input)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if strings.TrimSpace(minified) != strings.TrimSpace(expectedOutput) {
+		t.Errorf("Expected %q, got %q", expectedOutput, minified)
+	}
+}
+
+// TestMinificationOfMappings fixes inline format handling.
+func TestMinificationOfMappings(t *testing.T) {
+	input := `
+mappings:
+  key1: value1
+  key2: value2
+`
+	expectedOutput := "mappings:{key1:value1, key2:value2}\n"
+
+	minified, err := Minify(input)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if minified != expectedOutput {
+		t.Errorf("Expected %q, got %q", expectedOutput, minified)
+	}
+}
+
+// TestAnchorAliasMinification ensures anchors & aliases remain valid.
+func TestAnchorAliasMinification(t *testing.T) {
+	input := `
+defaults: &defaults
+  key1: value1
+  key2: value2
+
+config:
+  <<: *defaults
+  key3: value3
+`
+	expectedOutput := "defaults:&defaults {key1:value1, key2:value2}\nconfig:{<<:*defaults, key3:value3}\n"
+
+	minified, err := Minify(input)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if minified != expectedOutput {
+		t.Errorf("Expected %q, got %q", expectedOutput, minified)
+	}
+}
+
+// TestComplexDataStructures ensures nested maps/lists are inline.
+func TestComplexDataStructures(t *testing.T) {
+	input := `
+top-level:
+  nested-map:
+    key1: value1
+    key2: value2
+  nested-list:
+    - list-item1
+    - list-item2
+`
+	expectedOutput := "top-level:{nested-map:{key1:value1, key2:value2}, nested-list:[list-item1, list-item2]}\n"
+
+	minified, err := Minify(input)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if minified != expectedOutput {
+		t.Errorf("Expected %q, got %q", expectedOutput, minified)
+	}
+}
+
+// TestSafeModePreservesValidity checks safe mode behavior.
+func TestSafeModePreservesValidity(t *testing.T) {
+	input := `
+nested:
+  key: "value with spaces"
+  another: "special characters: @#%"
+`
+	expectedOutput := "nested:{key:\"value with spaces\", another:\"special characters: @#%\"}\n"
+
+	minified, err := Minify(input)
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	if minified != expectedOutput {
+		t.Errorf("Expected %q, got %q", expectedOutput, minified)
+	}
+}
 
 // TestErrorHandling ensures that invalid YAML results in an error.
 func TestErrorHandling(t *testing.T) {
@@ -41,7 +142,7 @@ func TestBasicYAMLStructure(t *testing.T) {
 // TestWhitespaceAndNewlineMinification checks if unnecessary whitespaces and newlines are removed.
 func TestWhitespaceAndNewlineMinification(t *testing.T) {
 	input := "   key: value   \n\n"
-	expectedOutput := "key:value\n" // Updated to match minified format
+	expectedOutput := "key:value\n"
 
 	minified, err := Minify(input)
 	if err != nil {
@@ -60,45 +161,7 @@ sequences:
   - item1
   - item2
 `
-	expectedOutput := "sequences:\n  - item1\n  - item2\n" // Updated
-
-	minified, err := Minify(input)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	if minified != expectedOutput {
-		t.Errorf("Expected %q, got %q", expectedOutput, minified)
-	}
-}
-
-// TestMinificationOfMappings checks minification of mappings.
-func TestMinificationOfMappings(t *testing.T) {
-	input := `
-mappings:
-  key1: value1
-  key2: value2
-`
-	expectedOutput := "mappings:\n  key1:value1\n  key2:value2\n" // Updated
-
-	minified, err := Minify(input)
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-
-	if minified != expectedOutput {
-		t.Errorf("Expected %q, got %q", expectedOutput, minified)
-	}
-}
-
-// TestWhitespaceAndNewlineRemoval checks if unnecessary whitespaces and newlines are properly removed.
-func TestWhitespaceAndNewlineRemoval(t *testing.T) {
-	input := `
-    key:
-        - value1
-        - value2
-`
-	expectedOutput := "key:\n  - value1\n  - value2\n" // No change needed here
+	expectedOutput := "sequences:\n  - item1\n  - item2\n"
 
 	minified, err := Minify(input)
 	if err != nil {

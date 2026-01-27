@@ -1,136 +1,120 @@
+// minify/minify.go
 package minify
-
-// minify.go
-// YAML minifier
-
-// TODO:
-// Minify mappings in string representations to inline format.
-// Minify mappings in string representations to remove unnecessary quotes.
-// Minify using anchor and alias to reduce redundancy.
-// Minify key: value spacing to key:value.
-// Remove any other unnecessary whitespace or new lines.
-// Implement a 'safe mode' that minifies only as far as possible while ensuring that the unmarshaled versions of the original and current YAML are valid.
-// Ensure code can handle complex combinations of data types.
 
 import (
 	"bytes"
-	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
-// Minify takes a YAML string, minifies it and returns the minified YAML.
+// Minify reduces YAML to its most compact valid form.
 func Minify(inputYAML string) (string, error) {
-	// Preprocess the input string
-	inputYAML = preprocessMinifications(inputYAML)
-
 	var rootNode yaml.Node
 
-	// Unmarshal the YAML into the rootNode
+	// Parse YAML structure
 	err := yaml.Unmarshal([]byte(inputYAML), &rootNode)
 	if err != nil {
 		return "", err
 	}
 
-	// Apply minification to the rootNode
+	// Apply minification transformations
 	minifyNode(&rootNode)
 
-	// Create a buffer to hold the minified YAML
+	// Convert back to YAML with minimal indentation
 	var buffer bytes.Buffer
 	encoder := yaml.NewEncoder(&buffer)
-	encoder.SetIndent(2) // Reduced indentation for compactness
+	encoder.SetIndent(0) // Ensures tight formatting
+	defer encoder.Close()
 
-	// Encode the rootNode back to YAML and put it in the buffer
 	if err := encoder.Encode(&rootNode); err != nil {
 		return "", err
 	}
 
-	// Convert buffer contents to a string and trim leading whitespace
-	minifiedYAML := strings.TrimLeft(buffer.String(), " \t")
-
-	// Post-process the minified YAML
-	minifiedYAML = postProcessMinifications(minifiedYAML)
-
-	// Add a newline at the end if it's not already there
-	if !strings.HasSuffix(minifiedYAML, "\n") {
-		minifiedYAML += "\n"
-	}
-
-	return minifiedYAML, nil
+	// Trim unnecessary spaces from output
+	return cleanupFormatting(buffer.String()), nil
 }
 
+// cleanupFormatting removes unnecessary spaces and optimizes key-value pairs.
+func cleanupFormatting(input string) string {
+	lines := strings.Split(input, "\n")
+	for i, line := range lines {
+		// Ensure proper spacing for mappings (key:value)
+		if strings.Contains(line, ": ") && !strings.Contains(line, "\"") && !strings.Contains(line, "'") {
+			lines[i] = strings.Replace(line, ": ", ":", 1)
+		}
+	}
+
+	// Convert `true/false/null` to `y/n/~` but avoid modifying words like "truevalue"
+	output := strings.Join(lines, "\n")
+	output = strings.ReplaceAll(output, "\ntrue\n", "\ny\n")
+	output = strings.ReplaceAll(output, "\nfalse\n", "\nn\n")
+	output = strings.ReplaceAll(output, "\nnull\n", "\n~\n")
+
+	return output
+}
+
+// minifyNode applies compact transformations to YAML nodes.
 func minifyNode(node *yaml.Node) {
 	switch node.Kind {
-	case yaml.MappingNode, yaml.SequenceNode:
+	case yaml.MappingNode:
+		inlineMapping(node)
 		for _, n := range node.Content {
 			minifyNode(n)
 		}
+	case yaml.SequenceNode:
+		inlineSequence(node)
 	case yaml.ScalarNode:
-		// Trim spaces and remove unnecessary quotes from scalar values
-		node.Value = strings.TrimSpace(node.Value)
-		if node.Style == yaml.DoubleQuotedStyle || node.Style == yaml.SingleQuotedStyle {
-			node.Style = yaml.TaggedStyle
-		}
-
-		// Minify boolean and null values based on string comparison
-		if node.Value == "true" {
-			node.Value = "y"
-		} else if node.Value == "false" {
-			node.Value = "n"
-		} else if node.Value == "null" {
-			node.Value = "~"
-		}
+		minifyScalar(node)
 	}
 }
 
-func preprocessMinifications(input string) string {
-	// Regular expressions to identify standalone booleans and nulls
-	trueRegex := regexp.MustCompile(`(?m)(^|\s)true($|\s)`)
-	falseRegex := regexp.MustCompile(`(?m)(^|\s)false($|\s)`)
-	nullRegex := regexp.MustCompile(`(?m)(^|\s)null($|\s)`)
-
-	// Replace true, false, and null with 'y', 'n', and '~'
-	input = trueRegex.ReplaceAllStringFunc(input, func(m string) string {
-		return strings.Replace(m, "true", "y", -1)
-	})
-	input = falseRegex.ReplaceAllStringFunc(input, func(m string) string {
-		return strings.Replace(m, "false", "n", -1)
-	})
-	input = nullRegex.ReplaceAllStringFunc(input, func(m string) string {
-		return strings.Replace(m, "null", "~", -1)
-	})
-
-	return input
-}
-
-func postProcessMinifications(input string) string {
-	var lines []string
-	inMapping := false
-
-	for _, line := range strings.Split(input, "\n") {
-		trimmedLine := strings.TrimSpace(line)
-
-		// Detect if we're in a mapping block
-		if strings.HasSuffix(trimmedLine, ":") {
-			inMapping = true
-		} else if trimmedLine == "" {
-			inMapping = false
-		}
-
-		// Apply minification only to non-indented key-value pairs and within mappings
-		if !strings.HasPrefix(line, "  ") && keyValueRegex.MatchString(trimmedLine) {
-			if inMapping && !strings.HasSuffix(trimmedLine, ":") {
-				line = keyValueRegex.ReplaceAllString(line, "$1:$2")
-			} else if !inMapping {
-				line = keyValueRegex.ReplaceAllString(line, "$1:$2")
-			}
-		}
-
-		lines = append(lines, line)
+// inlineMapping converts mappings to inline `{key:value, key2:value2}` format.
+func inlineMapping(node *yaml.Node) {
+	if node.Kind != yaml.MappingNode || len(node.Content) > 4 {
+		return // Avoid excessive inline minifications.
 	}
 
-	return strings.Join(lines, "\n")
+	inlineFormat := make([]string, 0, len(node.Content)/2)
+	for i := 0; i < len(node.Content); i += 2 {
+		key := node.Content[i].Value
+		inlineFormat = append(inlineFormat, key+":"+node.Content[i+1].Value)
+	}
+
+	node.Value = "{" + strings.Join(inlineFormat, ", ") + "}"
+	node.Style = yaml.FlowStyle
+	node.Content = nil // Clear children since it's now inline
 }
 
-var keyValueRegex = regexp.MustCompile(`^\s*([^:\n]+):\s+(.*)$`)
+// inlineSequence converts short lists to `[item1, item2]` format.
+func inlineSequence(node *yaml.Node) {
+	if len(node.Content) > 3 { // Keep inline only for short lists.
+		return
+	}
+	values := make([]string, len(node.Content))
+	for i, item := range node.Content {
+		values[i] = item.Value
+	}
+	node.Value = "[" + strings.Join(values, ", ") + "]"
+	node.Style = yaml.FlowStyle
+	node.Content = nil // Clear children since it's now inline
+}
+
+// minifyScalar removes unnecessary quotes and normalizes scalar values.
+func minifyScalar(node *yaml.Node) {
+	node.Value = strings.TrimSpace(node.Value)
+
+	// Remove unnecessary quotes unless needed
+	if node.Style == yaml.DoubleQuotedStyle || node.Style == yaml.SingleQuotedStyle {
+		node.Style = yaml.FlowStyle
+	}
+
+	// Minify boolean and null values safely
+	if node.Value == "true" {
+		node.Value = "y"
+	} else if node.Value == "false" {
+		node.Value = "n"
+	} else if node.Value == "null" {
+		node.Value = "~"
+	}
+}

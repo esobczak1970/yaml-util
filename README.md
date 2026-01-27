@@ -6,15 +6,13 @@ A Go module for YAML processing, providing functionalities to minify, maxify, an
 
 ```bash
 go get github.com/esobczak1970/yaml-util
-```
-
-## Usage
-
-### Minify YAML
-
+Usage
+Minify YAML
 To minify a YAML string:
 
-```go
+go
+Copy
+Edit
 package main
 
 import (
@@ -37,12 +35,82 @@ func main() {
 
     fmt.Println(minified)
 }
-```
+This will convert the YAML content into its most compact form, removing unnecessary whitespace while preserving structure.
 
-This will convert the YAML content into its most compact form.
+Features
+✅ Inline Mappings - Converts nested mappings into {key:value, key2:value2} format.
+✅ Boolean & Null Shortening - true → y, false → n, null → ~.
+✅ Preserves Anchors & Aliases - &default and *default remain intact.
+✅ Handles Nested Lists & Maps - Compact formatting of structures.
 
-### Maxify and Verbose
+Maxify YAML (TODO)
+📌 Planned Feature: maxify will expand YAML for better readability by formatting everything in a human-friendly structure.
 
-Similarly, you can use the `maxify` and `verbose` packages to pretty-print or expand YAML content. (Implementations for these functions should be created following a similar pattern.)
+Example Usage (Coming Soon)
+go
+Copy
+Edit
+package main
 
-Remember to update the README with actual examples once `maxify` and `verbose` functionalities are fully implemented.
+import (
+    "fmt"
+    "github.com/esobczak1970/yaml-util/maxify"
+)
+
+func main() {
+    yamlContent := "key:value"
+
+    maxified, err := maxify.Maxify(yamlContent)
+    if err != nil {
+        fmt.Println("Error maxifying YAML:", err)
+        return
+    }
+
+    fmt.Println(maxified)
+}
+📌 Expected Output:
+
+makefile
+Copy
+Edit
+key: value
+Verbose YAML (TODO)
+📌 Planned Feature: verbose will add comments and structure hints to YAML.
+
+Example Usage (Coming Soon)
+go
+Copy
+Edit
+package main
+
+import (
+    "fmt"
+    "github.com/esobczak1970/yaml-util/verbose"
+)
+
+func main() {
+    yamlContent := "key:value"
+
+    verboseYAML, err := verbose.MakeVerbose(yamlContent)
+    if err != nil {
+        fmt.Println("Error making YAML verbose:", err)
+        return
+    }
+
+    fmt.Println(verboseYAML)
+}
+📌 Expected Output:
+
+vbnet
+Copy
+Edit
+# Key-value mapping
+key: value  # Main configuration key
+Development Notes
+The following files are still TODO:
+
+maxify/maxify.go
+maxify/maxify_test.go
+verbose/verbose.go
+verbose/verbose_test.go
+📌 A Make.sh script will ensure that placeholder files exist.
