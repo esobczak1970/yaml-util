@@ -2,6 +2,7 @@
 package verbose
 
 import (
+	"bytes"
 	"strings"
 	"testing"
 
@@ -235,9 +236,9 @@ func TestMakeVerboseWithOptions(t *testing.T) {
 	input := "name: test\nport: 8080"
 
 	tests := []struct {
-		name         string
-		opts         VerboseOptions
-		shouldHave   []string
+		name          string
+		opts          VerboseOptions
+		shouldHave    []string
 		shouldNotHave []string
 	}{
 		{
@@ -248,7 +249,7 @@ func TestMakeVerboseWithOptions(t *testing.T) {
 				AddExamples:          false,
 				Indent:               4,
 			},
-			shouldHave:   []string{"# string", "# integer"},
+			shouldHave:    []string{"# string", "# integer"},
 			shouldNotHave: []string{"# Mapping"},
 		},
 		{
@@ -259,7 +260,7 @@ func TestMakeVerboseWithOptions(t *testing.T) {
 				AddExamples:          false,
 				Indent:               4,
 			},
-			shouldHave:   []string{"# Mapping"},
+			shouldHave:    []string{"# Mapping"},
 			shouldNotHave: []string{"# string", "# integer"},
 		},
 		{
@@ -631,5 +632,142 @@ database:
 				t.Error("Expected verbose version to be longer due to comments")
 			}
 		})
+	}
+}
+
+func TestVerboseProcessNodeAll(t *testing.T) {
+	opts := DefaultOptions()
+	var b bytes.Buffer
+
+	nodeDoc := &yaml.Node{Kind: yaml.DocumentNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "a"}}}
+	processNode(&b, nodeDoc, 0, "", opts)
+
+	nodeAlias := &yaml.Node{Kind: yaml.AliasNode, Value: "a"}
+	processNode(&b, nodeAlias, 0, "", opts)
+
+	nodeScalar := &yaml.Node{Kind: yaml.ScalarNode, Value: "a"}
+	processNode(&b, nodeScalar, 0, "", opts)
+
+	processNode(&b, nil, 0, "", opts)
+}
+
+func TestVerboseProcessSequenceAll(t *testing.T) {
+	opts := DefaultOptions()
+	var b bytes.Buffer
+	nodeDoc := &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{{Kind: yaml.AliasNode, Value: "a"}}}
+	processSequenceNode(&b, nodeDoc, 0, "", opts)
+
+	nodeSeqMap := &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{{Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k"}, {Kind: yaml.ScalarNode, Value: "v"}}}}}
+	processSequenceNode(&b, nodeSeqMap, 0, "", opts)
+
+	nodeSeqSeq := &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{{Kind: yaml.SequenceNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "v"}}}}}
+	processSequenceNode(&b, nodeSeqSeq, 0, "", opts)
+
+	nodeDocNil := &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{nil}}
+	processSequenceNode(&b, nodeDocNil, 0, "", opts)
+}
+
+func TestVerboseProcessMappingAll(t *testing.T) {
+	opts := DefaultOptions()
+	var b bytes.Buffer
+	nodeMap := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k"}, {Kind: yaml.AliasNode, Value: "a"}}}
+	processMappingNode(&b, nodeMap, 0, "", opts)
+
+	nodeMapSeq := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k"}, {Kind: yaml.SequenceNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "v"}}}}}
+	processMappingNode(&b, nodeMapSeq, 0, "", opts)
+
+	nodeMapMap := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k"}, {Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k2"}, {Kind: yaml.ScalarNode, Value: "v2"}}}}}
+	processMappingNode(&b, nodeMapMap, 0, "", opts)
+
+	nodeMapNil := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k"}, nil}}
+	processMappingNode(&b, nodeMapNil, 0, "", opts)
+}
+
+func TestVerboseFormatAliasValue(t *testing.T) {
+	nodeNil := (*yaml.Node)(nil)
+	if formatAliasValue(nodeNil) != "*" {
+		t.Errorf("expected *")
+	}
+
+	nodeAlias := &yaml.Node{Kind: yaml.AliasNode}
+	if formatAliasValue(nodeAlias) != "*" {
+		t.Errorf("expected *")
+	}
+
+	nodeAliasAnch := &yaml.Node{Kind: yaml.AliasNode, Alias: &yaml.Node{Anchor: "anc"}}
+	if formatAliasValue(nodeAliasAnch) != "*anc" {
+		t.Errorf("expected *anc")
+	}
+}
+
+func TestVerboseFormatScalarValue(t *testing.T) {
+	nodeEmpty := &yaml.Node{Kind: yaml.ScalarNode, Value: ""}
+	if formatScalarValue(nodeEmpty) != `""` {
+		t.Errorf("expected \"\"")
+	}
+}
+
+func TestVerboseNeedsQuotes(t *testing.T) {
+	if !needsQuotes("  a") {
+		t.Errorf("expected true")
+	}
+	if !needsQuotes(":") {
+		t.Errorf("expected true")
+	}
+}
+
+func TestVerboseGetScalarTypeComment(t *testing.T) {
+	opts := DefaultOptions()
+	nodeBool := &yaml.Node{Kind: yaml.ScalarNode, Value: "y"}
+	if getScalarTypeComment(nodeBool, opts) != "boolean" {
+		t.Errorf("expected boolean")
+	}
+
+	nodeIntHex := &yaml.Node{Kind: yaml.ScalarNode, Value: "+1"}
+	if getScalarTypeComment(nodeIntHex, opts) != "integer" {
+		t.Errorf("expected integer")
+	}
+
+	nodeFloatE := &yaml.Node{Kind: yaml.ScalarNode, Value: "-1.5"}
+	if getScalarTypeComment(nodeFloatE, opts) != "float" {
+		t.Errorf("expected float")
+	}
+
+	nodeFloatDot := &yaml.Node{Kind: yaml.ScalarNode, Value: ".5"}
+	if getScalarTypeComment(nodeFloatDot, opts) != "float" {
+		t.Errorf("expected float")
+	}
+}
+
+func TestVerboseIsTypeEdge(t *testing.T) {
+	if isInteger("+") {
+		t.Errorf("expected false")
+	}
+	if isFloat("+") {
+		t.Errorf("expected false")
+	}
+	if isFloat(".5.5") {
+		t.Errorf("expected false")
+	}
+	if isFloat("1.5.5") {
+		t.Errorf("expected false")
+	}
+}
+
+func TestVerboseValidateIndentation(t *testing.T) {
+	_, err := MakeVerbose("a: \n\tvalue")
+	if err == nil {
+		t.Errorf("expected error")
+	}
+	_, err2 := MakeVerbose("a\n b\n  c")
+	if err2 == nil {
+		t.Errorf("expected error")
+	}
+}
+
+func TestMakeVerboseError(t *testing.T) {
+	_, err := MakeVerbose("key: \"value")
+	if err == nil {
+		t.Errorf("expected error")
 	}
 }

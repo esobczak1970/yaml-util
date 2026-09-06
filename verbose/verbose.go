@@ -115,6 +115,9 @@ func processMappingNode(buf *bytes.Buffer, node *yaml.Node, depth int, path stri
 
 		buf.WriteString(fmt.Sprintf("%s%s:", indent, key))
 
+		if valueNode == nil {
+			continue
+		}
 		if valueNode.Anchor != "" {
 			buf.WriteString(fmt.Sprintf(" &%s", valueNode.Anchor))
 		}
@@ -125,7 +128,7 @@ func processMappingNode(buf *bytes.Buffer, node *yaml.Node, depth int, path stri
 			buf.WriteString(formatScalarValue(valueNode))
 
 			if opts.AddTypeComments {
-				comment := getScalarTypeComment(valueNode)
+				comment := getScalarTypeComment(valueNode, opts)
 				if comment != "" {
 					buf.WriteString(fmt.Sprintf(" # %s", comment))
 				}
@@ -186,6 +189,9 @@ func processSequenceNode(buf *bytes.Buffer, node *yaml.Node, depth int, path str
 
 		buf.WriteString(fmt.Sprintf("%s-", indent))
 
+		if item == nil {
+			continue
+		}
 		if item.Anchor != "" {
 			buf.WriteString(fmt.Sprintf(" &%s", item.Anchor))
 		}
@@ -196,7 +202,7 @@ func processSequenceNode(buf *bytes.Buffer, node *yaml.Node, depth int, path str
 			buf.WriteString(formatScalarValue(item))
 
 			if opts.AddTypeComments {
-				comment := getScalarTypeComment(item)
+				comment := getScalarTypeComment(item, opts)
 				if comment != "" {
 					buf.WriteString(fmt.Sprintf(" # %s", comment))
 				}
@@ -250,7 +256,7 @@ func processScalarNode(buf *bytes.Buffer, node *yaml.Node, depth int, opts Verbo
 	buf.WriteString(fmt.Sprintf("%s%s", indent, formatScalarValue(node)))
 
 	if opts.AddTypeComments {
-		comment := getScalarTypeComment(node)
+		comment := getScalarTypeComment(node, opts)
 		if comment != "" {
 			buf.WriteString(fmt.Sprintf(" # %s", comment))
 		}
@@ -307,7 +313,7 @@ func needsQuotes(value string) bool {
 	return strings.ContainsAny(value, ":{}[]|>*&!%@`#")
 }
 
-func getScalarTypeComment(node *yaml.Node) string {
+func getScalarTypeComment(node *yaml.Node, opts VerboseOptions) string {
 	value := node.Value
 
 	switch {
@@ -322,6 +328,9 @@ func getScalarTypeComment(node *yaml.Node) string {
 	default:
 		if len(value) > 50 {
 			return "string (long)"
+		}
+		if value == "" && opts.AddExamples {
+			return "string (empty)"
 		}
 		return "string"
 	}
