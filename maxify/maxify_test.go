@@ -202,7 +202,7 @@ func TestMaxifyComplexStructures(t *testing.T) {
 	}
 }
 
-func TestMaxifyWithIndent(t *testing.T) {
+func TestWithIndent(t *testing.T) {
 	tests := []struct {
 		name   string
 		input  string
@@ -227,7 +227,7 @@ func TestMaxifyWithIndent(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := MaxifyWithIndent(tc.input, tc.indent)
+			result, err := WithIndent(tc.input, tc.indent)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}

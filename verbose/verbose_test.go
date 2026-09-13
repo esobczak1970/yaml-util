@@ -237,13 +237,13 @@ func TestMakeVerboseWithOptions(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		opts          VerboseOptions
+		opts          Options
 		shouldHave    []string
 		shouldNotHave []string
 	}{
 		{
 			name: "Type comments enabled",
-			opts: VerboseOptions{
+			opts: Options{
 				AddTypeComments:      true,
 				AddStructureComments: false,
 				AddExamples:          false,
@@ -254,7 +254,7 @@ func TestMakeVerboseWithOptions(t *testing.T) {
 		},
 		{
 			name: "Structure comments enabled",
-			opts: VerboseOptions{
+			opts: Options{
 				AddTypeComments:      false,
 				AddStructureComments: true,
 				AddExamples:          false,
@@ -265,7 +265,7 @@ func TestMakeVerboseWithOptions(t *testing.T) {
 		},
 		{
 			name: "All comments disabled",
-			opts: VerboseOptions{
+			opts: Options{
 				AddTypeComments:      false,
 				AddStructureComments: false,
 				AddExamples:          false,
@@ -275,7 +275,7 @@ func TestMakeVerboseWithOptions(t *testing.T) {
 		},
 		{
 			name: "Custom indentation",
-			opts: VerboseOptions{
+			opts: Options{
 				AddTypeComments:      true,
 				AddStructureComments: false,
 				AddExamples:          false,

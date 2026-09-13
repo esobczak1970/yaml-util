@@ -1,4 +1,4 @@
-// maxify/maxify.go
+// Package maxify provides utilities for expanding YAML.
 package maxify
 
 import (
@@ -13,11 +13,11 @@ const defaultIndent = 4
 
 // Maxify expands minified YAML-like input into a human-readable YAML format.
 func Maxify(inputYAML string) (string, error) {
-	return MaxifyWithIndent(inputYAML, defaultIndent)
+	return WithIndent(inputYAML, defaultIndent)
 }
 
-// MaxifyWithIndent expands YAML with a custom indentation level.
-func MaxifyWithIndent(inputYAML string, indent int) (string, error) {
+// WithIndent expands YAML with a custom indentation level.
+func WithIndent(inputYAML string, indent int) (string, error) {
 	if strings.TrimSpace(inputYAML) == "" {
 		return "", nil
 	}
