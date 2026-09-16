@@ -13,7 +13,7 @@ func TestProcessNodeDocument(t *testing.T) {
 			{Kind: yaml.ScalarNode, Value: "test"},
 		},
 	}
-	opts := VerboseOptions{Indent: 4, AddStructureComments: true}
+	opts := Options{Indent: 4, AddStructureComments: true}
 	var buf bytes.Buffer
 	if err := processNode(&buf, node, 0, "", opts); err != nil {
 		t.Fatal(err)

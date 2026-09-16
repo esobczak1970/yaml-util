@@ -99,7 +99,7 @@ func main() {
 
 ```go
 // Use 2-space indentation
-expanded, err := maxify.MaxifyWithIndent(yamlContent, 2)
+expanded, err := maxify.WithIndent(yamlContent, 2)
 ```
 
 **Maxify Features:**
@@ -155,7 +155,7 @@ app:
 **Custom Options:**
 
 ```go
-opts := verbose.VerboseOptions{
+opts := verbose.Options{
     AddTypeComments:      true,  // Add type annotations (string, integer, etc.)
     AddStructureComments: true,  // Add structural information (mappings, lists)
     AddExamples:          false, // Add example values (future feature)
@@ -187,8 +187,8 @@ func Minify(inputYAML string) (string, error)
 // Maxify expands YAML into a human-readable format
 func Maxify(inputYAML string) (string, error)
 
-// MaxifyWithIndent expands YAML with custom indentation
-func MaxifyWithIndent(inputYAML string, indent int) (string, error)
+// WithIndent expands YAML with custom indentation
+func WithIndent(inputYAML string, indent int) (string, error)
 ```
 
 ### verbose Package
@@ -198,13 +198,13 @@ func MaxifyWithIndent(inputYAML string, indent int) (string, error)
 func MakeVerbose(inputYAML string) (string, error)
 
 // MakeVerboseWithOptions adds comments with custom options
-func MakeVerboseWithOptions(inputYAML string, opts VerboseOptions) (string, error)
+func MakeVerboseWithOptions(inputYAML string, opts Options) (string, error)
 
 // DefaultOptions returns the default verbose options
-func DefaultOptions() VerboseOptions
+func DefaultOptions() Options
 
-// VerboseOptions controls comment generation behavior
-type VerboseOptions struct {
+// Options controls comment generation behavior
+type Options struct {
     AddTypeComments      bool // Add type annotations
     AddStructureComments bool // Add structural information
     AddExamples          bool // Add example values

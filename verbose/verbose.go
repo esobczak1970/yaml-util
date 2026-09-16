@@ -1,4 +1,4 @@
-// verbose/verbose.go
+// Package verbose provides utilities for adding comments to YAML.
 package verbose
 
 import (
@@ -12,8 +12,8 @@ import (
 
 const defaultIndent = 4
 
-// VerboseOptions controls comment generation behavior.
-type VerboseOptions struct {
+// Options controls comment generation behavior.
+type Options struct {
 	// AddTypeComments adds comments describing the type of each element.
 	AddTypeComments bool
 	// AddStructureComments adds comments about the structure (mapping/sequence).
@@ -25,8 +25,8 @@ type VerboseOptions struct {
 }
 
 // DefaultOptions returns the default verbose options.
-func DefaultOptions() VerboseOptions {
-	return VerboseOptions{
+func DefaultOptions() Options {
+	return Options{
 		AddExamples:          false,
 		AddStructureComments: true,
 		AddTypeComments:      true,
@@ -40,7 +40,7 @@ func MakeVerbose(inputYAML string) (string, error) {
 }
 
 // MakeVerboseWithOptions adds comments with custom options.
-func MakeVerboseWithOptions(inputYAML string, opts VerboseOptions) (string, error) {
+func MakeVerboseWithOptions(inputYAML string, opts Options) (string, error) {
 	if strings.TrimSpace(inputYAML) == "" {
 		return "", nil
 	}
@@ -62,7 +62,7 @@ func MakeVerboseWithOptions(inputYAML string, opts VerboseOptions) (string, erro
 	return buffer.String(), nil
 }
 
-func processNode(buf *bytes.Buffer, node *yaml.Node, depth int, path string, opts VerboseOptions) error {
+func processNode(buf *bytes.Buffer, node *yaml.Node, depth int, path string, opts Options) error {
 	if node == nil {
 		return nil
 	}
@@ -95,7 +95,7 @@ func processNode(buf *bytes.Buffer, node *yaml.Node, depth int, path string, opt
 	return nil
 }
 
-func processMappingNode(buf *bytes.Buffer, node *yaml.Node, depth int, path string, opts VerboseOptions) error {
+func processMappingNode(buf *bytes.Buffer, node *yaml.Node, depth int, path string, opts Options) error {
 	indent := strings.Repeat(" ", depth*opts.Indent)
 
 	if opts.AddStructureComments {
@@ -177,7 +177,7 @@ func processMappingNode(buf *bytes.Buffer, node *yaml.Node, depth int, path stri
 	return nil
 }
 
-func processSequenceNode(buf *bytes.Buffer, node *yaml.Node, depth int, path string, opts VerboseOptions) error {
+func processSequenceNode(buf *bytes.Buffer, node *yaml.Node, depth int, path string, opts Options) error {
 	indent := strings.Repeat(" ", depth*opts.Indent)
 
 	if opts.AddStructureComments {
@@ -251,7 +251,7 @@ func processSequenceNode(buf *bytes.Buffer, node *yaml.Node, depth int, path str
 	return nil
 }
 
-func processScalarNode(buf *bytes.Buffer, node *yaml.Node, depth int, opts VerboseOptions) error {
+func processScalarNode(buf *bytes.Buffer, node *yaml.Node, depth int, opts Options) error {
 	indent := strings.Repeat(" ", depth*opts.Indent)
 	buf.WriteString(fmt.Sprintf("%s%s", indent, formatScalarValue(node)))
 
@@ -313,7 +313,7 @@ func needsQuotes(value string) bool {
 	return strings.ContainsAny(value, ":{}[]|>*&!%@`#")
 }
 
-func getScalarTypeComment(node *yaml.Node, opts VerboseOptions) string {
+func getScalarTypeComment(node *yaml.Node, opts Options) string {
 	value := node.Value
 
 	switch {

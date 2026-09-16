@@ -1,4 +1,4 @@
-// minify/minify.go
+// Package minify provides utilities for minifying YAML.
 package minify
 
 import (
