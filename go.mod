@@ -1,7 +1,7 @@
 module github.com/esobczak1970/yaml-util
 
-go 1.25
+go 1.27.1
 
-toolchain go1.25.6
+toolchain go1.27.1
 
 require gopkg.in/yaml.v3 v3.0.1
