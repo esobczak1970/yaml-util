@@ -640,47 +640,47 @@ func TestVerboseProcessNodeAll(t *testing.T) {
 	var b bytes.Buffer
 
 	nodeDoc := &yaml.Node{Kind: yaml.DocumentNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "a"}}}
-	processNode(&b, nodeDoc, 0, "", opts)
+	_ = processNode(&b, nodeDoc, 0, "", opts)
 
 	nodeAlias := &yaml.Node{Kind: yaml.AliasNode, Value: "a"}
-	processNode(&b, nodeAlias, 0, "", opts)
+	_ = processNode(&b, nodeAlias, 0, "", opts)
 
 	nodeScalar := &yaml.Node{Kind: yaml.ScalarNode, Value: "a"}
-	processNode(&b, nodeScalar, 0, "", opts)
+	_ = processNode(&b, nodeScalar, 0, "", opts)
 
-	processNode(&b, nil, 0, "", opts)
+	_ = processNode(&b, nil, 0, "", opts)
 }
 
 func TestVerboseProcessSequenceAll(t *testing.T) {
 	opts := DefaultOptions()
 	var b bytes.Buffer
 	nodeDoc := &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{{Kind: yaml.AliasNode, Value: "a"}}}
-	processSequenceNode(&b, nodeDoc, 0, "", opts)
+	_ = processSequenceNode(&b, nodeDoc, 0, "", opts)
 
 	nodeSeqMap := &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{{Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k"}, {Kind: yaml.ScalarNode, Value: "v"}}}}}
-	processSequenceNode(&b, nodeSeqMap, 0, "", opts)
+	_ = processSequenceNode(&b, nodeSeqMap, 0, "", opts)
 
 	nodeSeqSeq := &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{{Kind: yaml.SequenceNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "v"}}}}}
-	processSequenceNode(&b, nodeSeqSeq, 0, "", opts)
+	_ = processSequenceNode(&b, nodeSeqSeq, 0, "", opts)
 
 	nodeDocNil := &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{nil}}
-	processSequenceNode(&b, nodeDocNil, 0, "", opts)
+	_ = processSequenceNode(&b, nodeDocNil, 0, "", opts)
 }
 
 func TestVerboseProcessMappingAll(t *testing.T) {
 	opts := DefaultOptions()
 	var b bytes.Buffer
 	nodeMap := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k"}, {Kind: yaml.AliasNode, Value: "a"}}}
-	processMappingNode(&b, nodeMap, 0, "", opts)
+	_ = processMappingNode(&b, nodeMap, 0, "", opts)
 
 	nodeMapSeq := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k"}, {Kind: yaml.SequenceNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "v"}}}}}
-	processMappingNode(&b, nodeMapSeq, 0, "", opts)
+	_ = processMappingNode(&b, nodeMapSeq, 0, "", opts)
 
 	nodeMapMap := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k"}, {Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k2"}, {Kind: yaml.ScalarNode, Value: "v2"}}}}}
-	processMappingNode(&b, nodeMapMap, 0, "", opts)
+	_ = processMappingNode(&b, nodeMapMap, 0, "", opts)
 
 	nodeMapNil := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{{Kind: yaml.ScalarNode, Value: "k"}, nil}}
-	processMappingNode(&b, nodeMapNil, 0, "", opts)
+	_ = processMappingNode(&b, nodeMapNil, 0, "", opts)
 }
 
 func TestVerboseFormatAliasValue(t *testing.T) {
