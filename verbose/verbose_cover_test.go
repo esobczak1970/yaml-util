@@ -1,9 +1,9 @@
 package verbose
 
 import (
-	"testing"
 	"bytes"
 	"gopkg.in/yaml.v3"
+	"testing"
 )
 
 func TestProcessNodeDocument(t *testing.T) {

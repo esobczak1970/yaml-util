@@ -44,7 +44,7 @@ func WithIndent(inputYAML string, indent int) (string, error) {
 	var buffer bytes.Buffer
 	encoder := yaml.NewEncoder(&buffer)
 	encoder.SetIndent(indent)
-	defer encoder.Close()
+	defer func() { _ = encoder.Close() }()
 
 	if err := encoder.Encode(nodeToEncode); err != nil {
 		return "", err

@@ -85,7 +85,7 @@ func processNode(buf *bytes.Buffer, node *yaml.Node, depth int, path string, opt
 		return processScalarNode(buf, node, depth, opts)
 	case yaml.AliasNode:
 		indent := strings.Repeat(" ", depth*opts.Indent)
-		buf.WriteString(fmt.Sprintf("%s%s", indent, formatAliasValue(node)))
+		fmt.Fprintf(buf, "%s%s", indent, formatAliasValue(node))
 		if opts.AddTypeComments {
 			buf.WriteString(" # Alias reference")
 		}
@@ -99,7 +99,7 @@ func processMappingNode(buf *bytes.Buffer, node *yaml.Node, depth int, path stri
 	indent := strings.Repeat(" ", depth*opts.Indent)
 
 	if opts.AddStructureComments {
-		buf.WriteString(fmt.Sprintf("%s# Mapping\n", indent))
+		fmt.Fprintf(buf, "%s# Mapping\n", indent)
 	}
 
 	for i := 0; i < len(node.Content); i += 2 {
@@ -113,13 +113,13 @@ func processMappingNode(buf *bytes.Buffer, node *yaml.Node, depth int, path stri
 		}
 		currentPath += key
 
-		buf.WriteString(fmt.Sprintf("%s%s:", indent, key))
+		fmt.Fprintf(buf, "%s%s:", indent, key)
 
 		if valueNode == nil {
 			continue
 		}
 		if valueNode.Anchor != "" {
-			buf.WriteString(fmt.Sprintf(" &%s", valueNode.Anchor))
+			fmt.Fprintf(buf, " &%s", valueNode.Anchor)
 		}
 
 		switch valueNode.Kind {
@@ -130,19 +130,19 @@ func processMappingNode(buf *bytes.Buffer, node *yaml.Node, depth int, path stri
 			if opts.AddTypeComments {
 				comment := getScalarTypeComment(valueNode, opts)
 				if comment != "" {
-					buf.WriteString(fmt.Sprintf(" # %s", comment))
+					fmt.Fprintf(buf, " # %s", comment)
 				}
 				if valueNode.Anchor != "" {
-					buf.WriteString(fmt.Sprintf(" # anchor: %s", valueNode.Anchor))
+					fmt.Fprintf(buf, " # anchor: %s", valueNode.Anchor)
 				}
 			}
 			buf.WriteString("\n")
 
 		case yaml.MappingNode:
 			if opts.AddTypeComments {
-				buf.WriteString(fmt.Sprintf(" # Nested mapping (%d keys)", len(valueNode.Content)/2))
+				fmt.Fprintf(buf, " # Nested mapping (%d keys)", len(valueNode.Content)/2)
 				if valueNode.Anchor != "" {
-					buf.WriteString(fmt.Sprintf(" # anchor: %s", valueNode.Anchor))
+					fmt.Fprintf(buf, " # anchor: %s", valueNode.Anchor)
 				}
 			}
 			buf.WriteString("\n")
@@ -152,9 +152,9 @@ func processMappingNode(buf *bytes.Buffer, node *yaml.Node, depth int, path stri
 
 		case yaml.SequenceNode:
 			if opts.AddTypeComments {
-				buf.WriteString(fmt.Sprintf(" # List with %d items", len(valueNode.Content)))
+				fmt.Fprintf(buf, " # List with %d items", len(valueNode.Content))
 				if valueNode.Anchor != "" {
-					buf.WriteString(fmt.Sprintf(" # anchor: %s", valueNode.Anchor))
+					fmt.Fprintf(buf, " # anchor: %s", valueNode.Anchor)
 				}
 			}
 			buf.WriteString("\n")
@@ -163,7 +163,7 @@ func processMappingNode(buf *bytes.Buffer, node *yaml.Node, depth int, path stri
 			}
 
 		case yaml.AliasNode:
-			buf.WriteString(fmt.Sprintf(" %s", formatAliasValue(valueNode)))
+			fmt.Fprintf(buf, " %s", formatAliasValue(valueNode))
 			if opts.AddTypeComments {
 				buf.WriteString(" # Alias reference")
 			}
@@ -181,19 +181,19 @@ func processSequenceNode(buf *bytes.Buffer, node *yaml.Node, depth int, path str
 	indent := strings.Repeat(" ", depth*opts.Indent)
 
 	if opts.AddStructureComments {
-		buf.WriteString(fmt.Sprintf("%s# Sequence\n", indent))
+		fmt.Fprintf(buf, "%s# Sequence\n", indent)
 	}
 
 	for idx, item := range node.Content {
 		currentPath := fmt.Sprintf("%s[%d]", path, idx)
 
-		buf.WriteString(fmt.Sprintf("%s-", indent))
+		fmt.Fprintf(buf, "%s-", indent)
 
 		if item == nil {
 			continue
 		}
 		if item.Anchor != "" {
-			buf.WriteString(fmt.Sprintf(" &%s", item.Anchor))
+			fmt.Fprintf(buf, " &%s", item.Anchor)
 		}
 
 		switch item.Kind {
@@ -204,19 +204,19 @@ func processSequenceNode(buf *bytes.Buffer, node *yaml.Node, depth int, path str
 			if opts.AddTypeComments {
 				comment := getScalarTypeComment(item, opts)
 				if comment != "" {
-					buf.WriteString(fmt.Sprintf(" # %s", comment))
+					fmt.Fprintf(buf, " # %s", comment)
 				}
 				if item.Anchor != "" {
-					buf.WriteString(fmt.Sprintf(" # anchor: %s", item.Anchor))
+					fmt.Fprintf(buf, " # anchor: %s", item.Anchor)
 				}
 			}
 			buf.WriteString("\n")
 
 		case yaml.MappingNode:
 			if opts.AddTypeComments {
-				buf.WriteString(fmt.Sprintf(" # Item %d: mapping (%d keys)", idx+1, len(item.Content)/2))
+				fmt.Fprintf(buf, " # Item %d: mapping (%d keys)", idx+1, len(item.Content)/2)
 				if item.Anchor != "" {
-					buf.WriteString(fmt.Sprintf(" # anchor: %s", item.Anchor))
+					fmt.Fprintf(buf, " # anchor: %s", item.Anchor)
 				}
 			}
 			buf.WriteString("\n")
@@ -226,9 +226,9 @@ func processSequenceNode(buf *bytes.Buffer, node *yaml.Node, depth int, path str
 
 		case yaml.SequenceNode:
 			if opts.AddTypeComments {
-				buf.WriteString(fmt.Sprintf(" # Nested list (%d items)", len(item.Content)))
+				fmt.Fprintf(buf, " # Nested list (%d items)", len(item.Content))
 				if item.Anchor != "" {
-					buf.WriteString(fmt.Sprintf(" # anchor: %s", item.Anchor))
+					fmt.Fprintf(buf, " # anchor: %s", item.Anchor)
 				}
 			}
 			buf.WriteString("\n")
@@ -237,7 +237,7 @@ func processSequenceNode(buf *bytes.Buffer, node *yaml.Node, depth int, path str
 			}
 
 		case yaml.AliasNode:
-			buf.WriteString(fmt.Sprintf(" %s", formatAliasValue(item)))
+			fmt.Fprintf(buf, " %s", formatAliasValue(item))
 			if opts.AddTypeComments {
 				buf.WriteString(" # Alias reference")
 			}
@@ -253,15 +253,15 @@ func processSequenceNode(buf *bytes.Buffer, node *yaml.Node, depth int, path str
 
 func processScalarNode(buf *bytes.Buffer, node *yaml.Node, depth int, opts Options) error {
 	indent := strings.Repeat(" ", depth*opts.Indent)
-	buf.WriteString(fmt.Sprintf("%s%s", indent, formatScalarValue(node)))
+	fmt.Fprintf(buf, "%s%s", indent, formatScalarValue(node))
 
 	if opts.AddTypeComments {
 		comment := getScalarTypeComment(node, opts)
 		if comment != "" {
-			buf.WriteString(fmt.Sprintf(" # %s", comment))
+			fmt.Fprintf(buf, " # %s", comment)
 		}
 		if node.Anchor != "" {
-			buf.WriteString(fmt.Sprintf(" # anchor: %s", node.Anchor))
+			fmt.Fprintf(buf, " # anchor: %s", node.Anchor)
 		}
 	}
 
