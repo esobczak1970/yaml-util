@@ -10,7 +10,7 @@ APP_NAME := yaml-util
 GO ?= go
 BIN_DIR ?= $(CURDIR)/bin
 COVERAGE_FILE ?= coverage.out
-GOLANGCI_LINT_VERSION ?= v2.13.2
+GOLANGCI_LINT_VERSION ?= v1.64.5
 GOLANGCI_LINT_TIMEOUT ?= 5m
 GOLANGCI_LINT_BIN ?= $(BIN_DIR)/golangci-lint
 GO_TEST_FLAGS ?=
@@ -67,7 +67,7 @@ vet: deps
 $(GOLANGCI_LINT_BIN): go.mod
 	@mkdir -p "$(BIN_DIR)"
 	@echo "Installing golangci-lint $(GOLANGCI_LINT_VERSION)..."
-	GOBIN="$(BIN_DIR)" $(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	GOBIN="$(BIN_DIR)" $(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 
 lint: $(GOLANGCI_LINT_BIN)
 	"$(GOLANGCI_LINT_BIN)" run --timeout="$(GOLANGCI_LINT_TIMEOUT)" $(PKGS)

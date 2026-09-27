@@ -211,6 +211,71 @@ func TestEmitMappingAnchorScalar(t *testing.T) {
 	_ = emitMapping(&b, node, 0, true)
 }
 
+func TestShouldInlineSequenceCoverage(t *testing.T) {
+	tests := []struct {
+		name string
+		node *yaml.Node
+		want bool
+	}{
+		{
+			name: "nil node",
+			node: nil,
+			want: false,
+		},
+		{
+			name: "non-SequenceNode",
+			node: &yaml.Node{Kind: yaml.MappingNode},
+			want: false,
+		},
+		{
+			name: "SequenceNode with anchor",
+			node: &yaml.Node{Kind: yaml.SequenceNode, Anchor: "anchor1", Content: []*yaml.Node{{Kind: yaml.ScalarNode}}},
+			want: false,
+		},
+		{
+			name: "empty SequenceNode",
+			node: &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{}},
+			want: false,
+		},
+		{
+			name: "SequenceNode with > 3 items",
+			node: &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{
+				{Kind: yaml.ScalarNode}, {Kind: yaml.ScalarNode}, {Kind: yaml.ScalarNode}, {Kind: yaml.ScalarNode},
+			}},
+			want: false,
+		},
+		{
+			name: "SequenceNode where an item has an anchor",
+			node: &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{
+				{Kind: yaml.ScalarNode, Anchor: "itemAnchor"},
+			}},
+			want: false,
+		},
+		{
+			name: "SequenceNode where an item is not Scalar/Alias",
+			node: &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{
+				{Kind: yaml.MappingNode},
+			}},
+			want: false,
+		},
+		{
+			name: "valid inline SequenceNode",
+			node: &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{
+				{Kind: yaml.ScalarNode},
+			}},
+			want: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := shouldInlineSequence(tt.node); got != tt.want {
+				t.Errorf("shouldInlineSequence() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestShouldInlineMappingCases(t *testing.T) {
 	nodeNil := &yaml.Node{Kind: yaml.MappingNode, Content: nil}
 	_ = shouldInlineMapping(nodeNil, false)
