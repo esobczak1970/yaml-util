@@ -7,7 +7,7 @@ annotated forms.
 
 ## Requirements
 
-- Go 1.27.1 or later.
+- Go 1.27.2 (required).
 - `gopkg.in/yaml.v3`.
 
 ## Packages
@@ -27,6 +27,10 @@ Expands YAML into a more readable block-oriented form.
 ```go
 expanded, err := maxify.Maxify(input)
 expandedTwoSpaces, err := maxify.WithIndent(input, 2)
+
+opts := maxify.DefaultOptions()
+opts.Indent = 2
+expandedCustom, err := maxify.MaxifyWithOptions(input, opts)
 ```
 
 ### `verbose`
