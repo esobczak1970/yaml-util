@@ -18,3 +18,23 @@ func TestEnsureTrailingNewline(t *testing.T) {
 		t.Errorf("ensureTrailingNewline(\"a\\n\") = %q; want %q", got, "a\n")
 	}
 }
+
+func TestMaxifyWithOptionsEmpty(t *testing.T) {
+	res, err := MaxifyWithOptions("   \n", DefaultOptions())
+	if err != nil || res != "" {
+		t.Errorf("Expected empty result, got %q, %v", res, err)
+	}
+}
+
+func TestMaxifyWithOptionsBasic(t *testing.T) {
+	opts := DefaultOptions()
+	opts.Indent = 2
+	res, err := MaxifyWithOptions("key: value", opts)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	expected := "key: value\n"
+	if res != expected {
+		t.Errorf("Expected %q, got %q", expected, res)
+	}
+}

@@ -11,13 +11,31 @@ import (
 
 const defaultIndent = 4
 
+// Options controls maxification behavior.
+type Options struct {
+	// Indent sets the indentation level.
+	Indent int
+}
+
+// DefaultOptions returns the default maxify options.
+func DefaultOptions() Options {
+	return Options{
+		Indent: defaultIndent,
+	}
+}
+
 // Maxify expands minified YAML-like input into a human-readable YAML format.
 func Maxify(inputYAML string) (string, error) {
-	return WithIndent(inputYAML, defaultIndent)
+	return MaxifyWithOptions(inputYAML, DefaultOptions())
 }
 
 // WithIndent expands YAML with a custom indentation level.
 func WithIndent(inputYAML string, indent int) (string, error) {
+	return MaxifyWithOptions(inputYAML, Options{Indent: indent})
+}
+
+// MaxifyWithOptions expands YAML with custom options.
+func MaxifyWithOptions(inputYAML string, opts Options) (string, error) {
 	if strings.TrimSpace(inputYAML) == "" {
 		return "", nil
 	}
@@ -43,7 +61,7 @@ func WithIndent(inputYAML string, indent int) (string, error) {
 
 	var buffer bytes.Buffer
 	encoder := yaml.NewEncoder(&buffer)
-	encoder.SetIndent(indent)
+	encoder.SetIndent(opts.Indent)
 	defer func() { _ = encoder.Close() }()
 
 	if err := encoder.Encode(nodeToEncode); err != nil {
