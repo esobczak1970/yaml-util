@@ -42,3 +42,46 @@ func TestProcessNodeDocument(t *testing.T) {
 		t.Errorf("processNode() = %q; want %q", buf.String(), expected)
 	}
 }
+
+func TestIsIntegerAndFloat(t *testing.T) {
+	if isInteger("abc") {
+		t.Errorf("Expected false for abc")
+	}
+	if isFloat("abc") {
+		t.Errorf("Expected false for abc")
+	}
+}
+
+func TestGetScalarTypeComment(t *testing.T) {
+	nodeLong := &yaml.Node{Value: "this is a very long string that should be longer than 50 characters so it can trigger the long string path"}
+	if getScalarTypeComment(nodeLong, DefaultOptions()) != "string (long)" {
+		t.Errorf("Expected string (long)")
+	}
+
+	nodeEmpty := &yaml.Node{Value: ""}
+	opts := DefaultOptions()
+	opts.AddExamples = true
+	if getScalarTypeComment(nodeEmpty, opts) != "string (empty)" {
+		t.Errorf("Expected string (empty)")
+	}
+}
+
+func TestProcessNodeNil(t *testing.T) {
+	var b bytes.Buffer
+	err := processNode(&b, nil, 0, "", DefaultOptions())
+	if err != nil {
+		t.Errorf("Expected no error for nil node")
+	}
+}
+
+func TestVerboseErrorHandling(t *testing.T) {
+	_, err := MakeVerboseWithOptions("invalid: \n  - yaml: [unclosed", DefaultOptions())
+	if err == nil {
+		t.Errorf("Expected error for invalid yaml")
+	}
+
+	err = validateIndentation("\tfoo: bar")
+	if err == nil {
+		t.Errorf("Expected error for tab indentation")
+	}
+}

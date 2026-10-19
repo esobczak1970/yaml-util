@@ -358,3 +358,32 @@ func TestEmitNodeNilAndDefault(t *testing.T) {
 	nodeDocEmpty := &yaml.Node{Kind: yaml.DocumentNode, Content: nil}
 	_ = emitNode(&b, nodeDocEmpty, 0, false)
 }
+
+func TestLineAllowsChildren(t *testing.T) {
+	if lineAllowsChildren("key: foo") {
+		t.Errorf("Expected false for line ending with value")
+	}
+	if lineAllowsChildren("- foo") {
+		t.Errorf("Expected false for list item without mapping")
+	}
+	if !lineAllowsChildren("key:") {
+		t.Errorf("Expected true for line ending with colon")
+	}
+	if !lineAllowsChildren("- name: web1") {
+		t.Errorf("Expected true for mapping item")
+	}
+}
+
+func TestMinifyError(t *testing.T) {
+	_, err := Minify("invalid: \n  - yaml: [unclosed")
+	if err == nil {
+		t.Errorf("Expected error for invalid yaml")
+	}
+}
+
+func TestValidateIndentation(t *testing.T) {
+	err := validateIndentation("\tfoo: bar")
+	if err == nil {
+		t.Errorf("Expected error for tab")
+	}
+}
