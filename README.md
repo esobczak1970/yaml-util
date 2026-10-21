@@ -52,6 +52,10 @@ go get github.com/esobczak1970/yaml-util
 
 ## Development
 
+Make selects the exact Go version in `.go-version` through Go’s toolchain
+manager, including the matching `gofmt` and pinned v2 linter. An installed
+bootstrap Go is required; the first run may download the selected toolchain.
+
 Use the root Makefile:
 
 ```bash
