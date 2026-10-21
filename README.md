@@ -7,7 +7,7 @@ annotated forms.
 
 ## Requirements
 
-- Go 1.27.2 (required).
+- Go 1.27.3 (required).
 - `gopkg.in/yaml.v3`.
 
 ## Packages
