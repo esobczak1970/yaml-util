@@ -387,3 +387,13 @@ func TestValidateIndentation(t *testing.T) {
 		t.Errorf("Expected error for tab")
 	}
 }
+
+func TestShouldInlineMapping_MergeKey(t *testing.T) {
+	nodeMerge := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{
+		{Kind: yaml.ScalarNode, Value: "<<"},
+		{Kind: yaml.AliasNode, Value: "a"},
+	}}
+	if shouldInlineMapping(nodeMerge, false) {
+		t.Errorf("Expected false for merge key inline")
+	}
+}

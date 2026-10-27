@@ -85,3 +85,40 @@ func TestVerboseErrorHandling(t *testing.T) {
 		t.Errorf("Expected error for tab indentation")
 	}
 }
+
+func TestFormatScalarValueStyles(t *testing.T) {
+	nSingle := &yaml.Node{Kind: yaml.ScalarNode, Style: yaml.SingleQuotedStyle, Value: "v"}
+	if formatScalarValue(nSingle) != "'v'" {
+		t.Errorf("Expected 'v'")
+	}
+}
+
+func TestMakeVerboseWithOptionsError(t *testing.T) {
+	// A syntax error that triggers Unmarshal to fail
+	_, err := MakeVerboseWithOptions("invalid:\n  - yaml: [unclosed", DefaultOptions())
+	if err == nil {
+		t.Errorf("Expected err")
+	}
+}
+
+func TestMakeVerboseWithOptions_OptionsLogic(t *testing.T) {
+	opts := Options{AddTypeComments: false, AddStructureComments: false, AddExamples: false, Indent: 4}
+	res, err := MakeVerboseWithOptions("k: v", opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := "k: v\n"
+	if res != expected {
+		t.Errorf("Expected %q, got %q", expected, res)
+	}
+
+	optsTypeOnly := Options{AddTypeComments: true, AddStructureComments: false, AddExamples: false, Indent: 4}
+	res2, err := MakeVerboseWithOptions("k: v", optsTypeOnly)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected2 := "k: v # string\n"
+	if res2 != expected2 {
+		t.Errorf("Expected %q, got %q", expected2, res2)
+	}
+}
