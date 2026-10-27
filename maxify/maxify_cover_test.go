@@ -105,3 +105,42 @@ func TestValidateIndentation_Tabs(t *testing.T) {
 func TestExpandNode_Nil(t *testing.T) {
 	expandNode(nil) // should not panic
 }
+
+func TestExpandScalar_Coverage(t *testing.T) {
+	node := &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!bool",
+		Value: "Y",
+	}
+	expandScalar(node)
+	if node.Value != "true" {
+		t.Errorf("Expected true, got %s", node.Value)
+	}
+
+	node = &yaml.Node{
+		Kind:  yaml.ScalarNode,
+		Tag:   "!!bool",
+		Value: "N",
+	}
+	expandScalar(node)
+	if node.Value != "false" {
+		t.Errorf("Expected false, got %s", node.Value)
+	}
+}
+
+func TestValidateIndentation_Increase(t *testing.T) {
+	err := validateIndentation("key:\n  value")
+	if err != nil {
+		t.Errorf("Expected no error")
+	}
+
+	err = validateIndentation("key\n  value")
+	if err == nil {
+		t.Errorf("Expected error for increase after non-block")
+	}
+}
+
+func TestExpandScalar_Nil(t *testing.T) {
+	// expandScalar should safely return without panic if node is nil.
+	expandScalar(nil)
+}
