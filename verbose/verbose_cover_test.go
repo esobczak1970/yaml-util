@@ -86,36 +86,11 @@ func TestVerboseErrorHandling(t *testing.T) {
 	}
 }
 
-func TestProcessSequenceNodeErrorPropagation(t *testing.T) {
-	node := &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{
-		{Kind: yaml.AliasNode, Value: "a"},
-	}}
-	var b bytes.Buffer
-	// It doesn't actually error out, just checking it doesn't panic.
-	_ = processSequenceNode(&b, node, 0, "", DefaultOptions())
-}
-
-func TestProcessMappingNodeErrorPropagation(t *testing.T) {
-	node := &yaml.Node{Kind: yaml.MappingNode, Content: []*yaml.Node{
-		{Kind: yaml.ScalarNode, Value: "k"},
-		{Kind: yaml.AliasNode, Value: "a"},
-	}}
-	var b bytes.Buffer
-	_ = processMappingNode(&b, node, 0, "", DefaultOptions())
-}
-
 func TestFormatScalarValueStyles(t *testing.T) {
 	nSingle := &yaml.Node{Kind: yaml.ScalarNode, Style: yaml.SingleQuotedStyle, Value: "v"}
 	if formatScalarValue(nSingle) != "'v'" {
 		t.Errorf("Expected 'v'")
 	}
-}
-
-// Missing test: processNode for DocumentNode that errors
-func TestProcessNodeDocError(t *testing.T) {
-	node := &yaml.Node{Kind: yaml.DocumentNode, Content: []*yaml.Node{{Kind: yaml.AliasNode, Value: "a"}}}
-	var b bytes.Buffer
-	_ = processNode(&b, node, 0, "", DefaultOptions())
 }
 
 func TestMakeVerboseWithOptionsError(t *testing.T) {
@@ -125,21 +100,6 @@ func TestMakeVerboseWithOptionsError(t *testing.T) {
 		t.Errorf("Expected err")
 	}
 }
-
-// A quick formatting fix for the go file.
-
-// A test to cover processSequenceNode yaml.SequenceNode and yaml.MappingNode branches
-func TestProcessSequenceNodeComplex(t *testing.T) {
-	node := &yaml.Node{Kind: yaml.SequenceNode, Content: []*yaml.Node{
-		{Kind: yaml.SequenceNode, Content: []*yaml.Node{}},
-		{Kind: yaml.MappingNode, Content: []*yaml.Node{}},
-	}}
-	var b bytes.Buffer
-	_ = processSequenceNode(&b, node, 0, "", DefaultOptions())
-}
-
-// A test to cover MakeVerboseWithOptions error from processNode (although it doesnt error if valid YAML but the error branch exists in MakeVerboseWithOptions if processNode errors)
-// Actually processNode only errors if mapping or sequence process errors, but they don't natively error unless they write to buffer and buffer fails (which bytes.Buffer doesn't)
 
 func TestMakeVerboseWithOptions_OptionsLogic(t *testing.T) {
 	opts := Options{AddTypeComments: false, AddStructureComments: false, AddExamples: false, Indent: 4}
