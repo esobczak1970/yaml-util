@@ -95,7 +95,7 @@ same change.
 
 **Project:** yaml-util
 
-**Primary stack:** Go 1.27.3 library
+**Primary stack:** Go (version from `.go-version`) library
 
 - Public package behavior must remain deterministic and preserve YAML semantics.
 - Keep transformation logic in the owning package rather than copying parsing

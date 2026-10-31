@@ -17,7 +17,7 @@ GO_TOOLCHAIN ?= go$(GO_VERSION)
 GO_RUN = GOTOOLCHAIN=$(GO_TOOLCHAIN) $(GO)
 BIN_DIR ?= $(CURDIR)/bin
 COVERAGE_FILE ?= coverage.out
-# golangci-lint v2 supports Go 1.27. Never downgrade to v1 as a workaround;
+# golangci-lint v2 supports Go from .go-version. Never downgrade to v1 as a workaround;
 # rebuild the pinned v2 binary with the repository Go toolchain instead.
 GOLANGCI_LINT_VERSION ?= v2.14.0
 GOLANGCI_LINT_MODULE ?= github.com/golangci/golangci-lint/v2/cmd/golangci-lint
@@ -116,3 +116,9 @@ ci: deps check
 
 clean:
 	rm -rf "$(BIN_DIR)" "$(COVERAGE_FILE)"
+
+.PHONY: go-version-check
+go-version-check:
+	@bash scripts/check-go-version.sh
+
+doctor: go-version-check

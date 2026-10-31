@@ -7,7 +7,7 @@ annotated forms.
 
 ## Requirements
 
-- Go 1.27.3 (required).
+- Go (version from `.go-version`) (required).
 - `gopkg.in/yaml.v3`.
 
 ## Packages
@@ -104,3 +104,5 @@ Before submitting a change:
 ## License
 
 See the repository `LICENSE` file.
+
+Go toolchain selection is centralized in `.go-version`. Module `go`/`toolchain` directives mirror that pin because Go requires literal versions. Run `make go-version-check` to verify the contract before building.
