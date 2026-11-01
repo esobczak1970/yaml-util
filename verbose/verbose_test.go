@@ -372,7 +372,7 @@ spec:
 			}
 
 			// Verify result is valid YAML
-			var parsed interface{}
+			var parsed any
 			if err := yaml.Unmarshal([]byte(result), &parsed); err != nil {
 				t.Errorf("Result is not valid YAML: %v\nResult:\n%s", err, result)
 			}
@@ -411,7 +411,7 @@ func TestMakeVerboseQuotedStrings(t *testing.T) {
 			}
 
 			// Verify it's valid YAML
-			var parsed interface{}
+			var parsed any
 			if err := yaml.Unmarshal([]byte(result), &parsed); err != nil {
 				t.Errorf("Result is not valid YAML: %v\nResult:\n%s", err, result)
 			}
@@ -464,7 +464,7 @@ func TestMakeVerbosePreservesSemantics(t *testing.T) {
 	for i, input := range inputs {
 		t.Run(string(rune('A'+i)), func(t *testing.T) {
 			// Parse original
-			var original interface{}
+			var original any
 			if err := yaml.Unmarshal([]byte(input), &original); err != nil {
 				t.Fatalf("Original YAML is invalid: %v", err)
 			}
@@ -476,7 +476,7 @@ func TestMakeVerbosePreservesSemantics(t *testing.T) {
 			}
 
 			// Parse verbose version (comments should be ignored by parser)
-			var result interface{}
+			var result any
 			if err := yaml.Unmarshal([]byte(verbose), &result); err != nil {
 				t.Errorf("Verbose YAML is invalid: %v\nVerbose:\n%s", err, verbose)
 			}
@@ -622,7 +622,7 @@ database:
 			}
 
 			// Should be valid YAML
-			var parsed interface{}
+			var parsed any
 			if err := yaml.Unmarshal([]byte(result), &parsed); err != nil {
 				t.Errorf("Result is not valid YAML: %v", err)
 			}

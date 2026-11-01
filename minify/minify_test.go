@@ -323,7 +323,7 @@ func TestMinifyComplexStructures(t *testing.T) {
 			}
 			if !tc.wantErr {
 				// Verify we can parse the result back
-				var testNode interface{}
+				var testNode any
 				if err := yaml.Unmarshal([]byte(result), &testNode); err != nil {
 					t.Errorf("Result is not valid YAML: %v\nResult:\n%s", err, result)
 				}
@@ -418,7 +418,7 @@ func TestMinifyPreservesValidity(t *testing.T) {
 	for i, input := range inputs {
 		t.Run(string(rune('A'+i)), func(t *testing.T) {
 			// Parse original
-			var original interface{}
+			var original any
 			if err := yaml.Unmarshal([]byte(input), &original); err != nil {
 				t.Fatalf("Original YAML is invalid: %v", err)
 			}
@@ -430,7 +430,7 @@ func TestMinifyPreservesValidity(t *testing.T) {
 			}
 
 			// Parse minified
-			var result interface{}
+			var result any
 			if err := yaml.Unmarshal([]byte(minified), &result); err != nil {
 				t.Errorf("Minified YAML is invalid: %v\nMinified:\n%s", err, minified)
 			}
