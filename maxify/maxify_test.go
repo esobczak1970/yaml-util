@@ -186,7 +186,7 @@ func TestMaxifyComplexStructures(t *testing.T) {
 			}
 
 			// Verify result is valid YAML
-			var parsed interface{}
+			var parsed any
 			if err := yaml.Unmarshal([]byte(result), &parsed); err != nil {
 				t.Errorf("Result is not valid YAML: %v\nResult:\n%s", err, result)
 			}
@@ -326,7 +326,7 @@ func TestMaxifyQuotedStrings(t *testing.T) {
 			}
 
 			// Verify result is valid YAML
-			var parsed interface{}
+			var parsed any
 			if err := yaml.Unmarshal([]byte(result), &parsed); err != nil {
 				t.Errorf("Result is not valid YAML: %v\nResult:\n%s", err, result)
 			}
@@ -379,7 +379,7 @@ func TestMaxifyPreservesSemantics(t *testing.T) {
 	for i, input := range inputs {
 		t.Run(string(rune('A'+i)), func(t *testing.T) {
 			// Parse original
-			var original interface{}
+			var original any
 			if err := yaml.Unmarshal([]byte(input), &original); err != nil {
 				t.Fatalf("Original YAML is invalid: %v", err)
 			}
@@ -391,7 +391,7 @@ func TestMaxifyPreservesSemantics(t *testing.T) {
 			}
 
 			// Parse maxified
-			var result interface{}
+			var result any
 			if err := yaml.Unmarshal([]byte(maxified), &result); err != nil {
 				t.Errorf("Maxified YAML is invalid: %v\nMaxified:\n%s", err, maxified)
 			}
@@ -482,7 +482,7 @@ features:[auth,api,frontend]`,
 			}
 
 			// Verify it's valid YAML
-			var parsed interface{}
+			var parsed any
 			if err := yaml.Unmarshal([]byte(result), &parsed); err != nil {
 				t.Errorf("Result is not valid YAML: %v\nResult:\n%s", err, result)
 			}
