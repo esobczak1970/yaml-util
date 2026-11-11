@@ -460,11 +460,11 @@ func lineAllowsChildren(trim string) bool {
 	// After the ":" allow only spaces and one or more anchors (rare, but safe),
 	// then optional comment.
 	noComment := stripComment(trim)
-	colon := strings.IndexByte(noComment, ':')
-	if colon < 0 {
+	_, after0, ok := strings.Cut(noComment, ":")
+	if !ok {
 		return false
 	}
-	after := strings.TrimSpace(noComment[colon+1:])
+	after := strings.TrimSpace(after0)
 	if after == "" {
 		return true
 	}
@@ -483,8 +483,8 @@ func lineAllowsChildren(trim string) bool {
 
 func stripComment(s string) string {
 	// Simple comment stripper; good enough for indentation heuristics.
-	if i := strings.IndexByte(s, '#'); i >= 0 {
-		return strings.TrimSpace(s[:i])
+	if before, _, ok := strings.Cut(s, "#"); ok {
+		return strings.TrimSpace(before)
 	}
 	return s
 }

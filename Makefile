@@ -28,7 +28,7 @@ GOLANGCI_LINT_BIN ?= $(GO_TOOLS_CACHE_ROOT)/golangci-lint/$(GOLANGCI_LINT_VERSIO
 GO_TEST_FLAGS ?=
 PKGS ?= ./...
 
-.PHONY: help all doctor deps tidy update format format-check vet lint test test-race coverage build check ci clean golangci-lint-bin
+.PHONY: help all doctor deps tidy update format format-check vet lint test test-race coverage build check ci clean modernize-check golangci-lint-bin
 
 help:
 	@printf '%s\n' \
@@ -38,6 +38,7 @@ help:
 	  '  make format       - Apply gofmt simplifications to Go source.' \
 	  '  make format-check - Fail when Go source is not gofmt clean.' \
 	  '  make lint         - Run golangci-lint using the repository-pinned version.' \
+	  '  make modernize-check - Check for Go modernization suggestions.' \
 	  '  make test         - Run the Go test suite.' \
 	  '  make test-race    - Run tests with the race detector.' \
 	  '  make coverage     - Write $(COVERAGE_FILE) with package coverage.' \
@@ -114,7 +115,10 @@ coverage: deps
 build: deps
 	$(GO_RUN) build -trimpath ./...
 
-check: format-check vet lint test build
+modernize-check: deps
+	$(GO_RUN) fix -diff $(PKGS)
+
+check: format-check vet lint modernize-check test build
 
 ci: deps check
 

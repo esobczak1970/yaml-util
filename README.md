@@ -65,8 +65,13 @@ make test
 make test-race
 make coverage
 make lint
+make modernize-check
 make check
 ```
+
+`make modernize-check` runs `go fix -diff ./...` without changing source; it
+fails when the pinned Go toolchain recommends modernizations. Review the diff
+before applying `go fix ./...`, then run `make check` again.
 
 Run a specific package directly when needed:
 
