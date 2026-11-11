@@ -389,8 +389,8 @@ func isFloat(s string) bool {
 }
 
 func validateIndentation(input string) error {
-	lines := strings.Split(input, "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(input, "\n")
+	for line := range lines {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
