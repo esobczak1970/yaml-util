@@ -331,7 +331,7 @@ func needsQuotes(value string) bool {
 	if value != strings.TrimSpace(value) {
 		return true
 	}
-	return strings.ContainsAny(value, ":{}[]|>*&!%@\`#\n\r\t\\\"")
+	return strings.ContainsAny(value, ":{}[]|>*&!%@`#\n\r\t\\\"")
 }
 
 func getScalarTypeComment(node *yaml.Node, opts Options) string {
