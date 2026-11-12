@@ -136,13 +136,13 @@ func expandScalar(node *yaml.Node) {
 // - Indentation may increase only after a line that starts a block (ends with ":" or is "-").
 // This catches the test case: "key:\n value\n  nested" (nested under a scalar line).
 func validateIndentation(input string) error {
-	lines := strings.Split(input, "\n")
+	// Stream lines without allocating an intermediate slice for each YAML document.
 
 	prevLine := ""
 	prevIndent := 0
 	havePrev := false
 
-	for _, raw := range lines {
+	for raw := range strings.SplitSeq(input, "\n") {
 		if strings.TrimSpace(raw) == "" {
 			continue
 		}

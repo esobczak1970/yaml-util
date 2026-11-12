@@ -409,13 +409,13 @@ func escapeSingleQuoted(s string) string {
 //	 value
 //	   nested
 func validateIndentation(input string) error {
-	lines := strings.Split(input, "\n")
+	// Stream lines without allocating an intermediate slice for each YAML document.
 
 	prevIndent := 0
 	prevAllowsChildren := true
 	havePrev := false
 
-	for _, raw := range lines {
+	for raw := range strings.SplitSeq(input, "\n") {
 		if strings.TrimSpace(raw) == "" {
 			continue
 		}
