@@ -37,6 +37,11 @@ expandedCustom, err := maxify.MaxifyWithOptions(input, opts)
 
 Adds structure/type-oriented comments using configurable options.
 
+Quoted scalar values and mapping keys are escaped when generating verbose YAML.
+This prevents embedded quotes, backslashes, and newlines from creating new
+configuration entries or invalid output. Review the resulting YAML before
+using it as a security-sensitive configuration file.
+
 ```go
 output, err := verbose.MakeVerbose(input)
 

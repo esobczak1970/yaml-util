@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -113,12 +114,12 @@ func processMappingNode(buf *bytes.Buffer, node *yaml.Node, depth int, path stri
 		}
 		currentPath += key
 
-		fmt.Fprintf(buf, "%s%s:", indent, key)
+		fmt.Fprintf(buf, "%s%s:", indent, formatMappingKey(keyNode))
 
 		if valueNode == nil {
 			continue
 		}
-		if valueNode.Anchor != "" {
+		if valueNode.Anchor != "" && valueNode.Kind != yaml.ScalarNode {
 			fmt.Fprintf(buf, " &%s", valueNode.Anchor)
 		}
 
@@ -192,7 +193,7 @@ func processSequenceNode(buf *bytes.Buffer, node *yaml.Node, depth int, path str
 		if item == nil {
 			continue
 		}
-		if item.Anchor != "" {
+		if item.Anchor != "" && item.Kind != yaml.ScalarNode {
 			fmt.Fprintf(buf, " &%s", item.Anchor)
 		}
 
@@ -282,6 +283,26 @@ func formatAliasValue(node *yaml.Node) string {
 	return "*"
 }
 
+// formatMappingKey preserves the key's quoting style while escaping its
+// contents. A key that contains YAML punctuation must not be able to introduce
+// another mapping entry in the generated configuration.
+func formatMappingKey(node *yaml.Node) string {
+	if node == nil {
+		return strconv.Quote("")
+	}
+	switch node.Style {
+	case yaml.DoubleQuotedStyle:
+		return strconv.Quote(node.Value)
+	case yaml.SingleQuotedStyle:
+		return "'" + strings.ReplaceAll(node.Value, "'", "''") + "'"
+	default:
+		if needsQuotes(node.Value) {
+			return strconv.Quote(node.Value)
+		}
+		return node.Value
+	}
+}
+
 func formatScalarValue(node *yaml.Node) string {
 	value := node.Value
 
@@ -292,12 +313,12 @@ func formatScalarValue(node *yaml.Node) string {
 
 	switch node.Style {
 	case yaml.DoubleQuotedStyle:
-		return fmt.Sprintf("%s\"%s\"", anchor, value)
+		return anchor + strconv.Quote(value)
 	case yaml.SingleQuotedStyle:
-		return fmt.Sprintf("%s'%s'", anchor, value)
+		return anchor + "'" + strings.ReplaceAll(value, "'", "''") + "'"
 	default:
 		if needsQuotes(value) {
-			return fmt.Sprintf("%s\"%s\"", anchor, value)
+			return anchor + strconv.Quote(value)
 		}
 		return anchor + value
 	}
@@ -310,7 +331,7 @@ func needsQuotes(value string) bool {
 	if value != strings.TrimSpace(value) {
 		return true
 	}
-	return strings.ContainsAny(value, ":{}[]|>*&!%@`#")
+	return strings.ContainsAny(value, ":{}[]|>*&!%@`#\n\r\t\\\"")
 }
 
 func getScalarTypeComment(node *yaml.Node, opts Options) string {
