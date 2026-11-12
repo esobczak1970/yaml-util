@@ -76,9 +76,9 @@ func TestVerboseFormatMappingKeyEscapesYAMLMetacharacters(t *testing.T) {
 	}{
 		{"plain", 0, "plain"},
 		{"unsafe: key", 0, `"unsafe: key"`},
-		{"a\"b", yaml.DoubleQuotedStyle, `"a\\"b"`},
+		{"a\"b", yaml.DoubleQuotedStyle, `"a\"b"`},
 		{"it's", yaml.SingleQuotedStyle, "'it''s'"},
-		{"line\nnext: true", 0, `"line\\nnext: true"`},
+		{"line\nnext: true", 0, `"line\nnext: true"`},
 	}
 	for _, tc := range cases {
 		got := formatMappingKey(&yaml.Node{Kind: yaml.ScalarNode, Style: tc.style, Value: tc.value})
