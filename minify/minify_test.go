@@ -451,3 +451,15 @@ func normalizeWhitespace(s string) string {
 	}
 	return strings.Join(result, "\n")
 }
+
+func BenchmarkValidateIndentationLarge(b *testing.B) {
+	// Exercise the hot-path indentation scan independently from YAML decoding.
+	input := strings.Repeat("root:\n  child: value\n\n", 1000)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if err := validateIndentation(input); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
