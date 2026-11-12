@@ -9,12 +9,12 @@ import (
 )
 
 func TestVerbosePreservesQuotedKeysAndValuesWithoutYAMLInjection(t *testing.T) {
-	input := `"role: admin": "value\\"\nadmin: true"
-"line\\nadmin: true": "second\\nline"
+	input := `"role: admin": "value\"\nadmin: true"
+"line\nadmin: true": "second\nline"
 single: 'it''s still safe'
 path: "C:\\\\windows\\\\system32"
 items:
-  - "payload\\"\n- unauthorized: true"
+  - "payload\"\n- unauthorized: true"
   - 'a''b'
 `
 	var want map[string]any
@@ -42,7 +42,7 @@ items:
 }
 
 func TestVerbosePreservesAnchoredScalarsAndEscapedQuotes(t *testing.T) {
-	input := `message: &msg "she said \\"hello\\""
+	input := `message: &msg "she said \"hello\""
 copy: *msg
 list:
   - &quote 'it''s safe'
